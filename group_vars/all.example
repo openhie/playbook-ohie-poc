@@ -1,0 +1,5 @@
+---
+# Set mysql root password
+mysqlrootpwd: password
+# Version of OpenMRS to deploy
+omrsversion: 1.9.6

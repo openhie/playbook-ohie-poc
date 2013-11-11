@@ -1,0 +1,11 @@
+---
+- name: Setup server
+  hosts: servers
+  user: root
+
+  roles:
+    - java
+    - tomcat
+    - mysql
+    - openmrs
+    - openmrs-modules
