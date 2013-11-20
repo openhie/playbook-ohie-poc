@@ -3,7 +3,8 @@
   file: path=/usr/share/tomcat7/.OpenMRS/modules state=directory group=tomcat7 owner=tomcat7 recurse=yes
 
 - name: Install POC Module
-  copy: src= {{ item }} dest=/usr/share/tomcat7/.OpenMRS/modules/ owner=tomcat7 group=tomcat7 
-  with_fileglob: modules/*
+  copy: src={{ item }} dest=/usr/share/tomcat7/.OpenMRS/modules/ owner=tomcat7 group=tomcat7 
+  with_fileglob:
+    - modules/*.omod
   notify: restart tomcat
 
