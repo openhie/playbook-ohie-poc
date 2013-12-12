@@ -33672,7 +33672,7 @@ CREATE TABLE `encounter` (
   CONSTRAINT `encounter_type_id` FOREIGN KEY (`encounter_type`) REFERENCES `encounter_type` (`encounter_type_id`),
   CONSTRAINT `encounter_visit_id_fk` FOREIGN KEY (`visit_id`) REFERENCES `visit` (`visit_id`),
   CONSTRAINT `user_who_voided_encounter` FOREIGN KEY (`voided_by`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
 -- Dumping data for table `encounter`
@@ -33706,7 +33706,13 @@ CREATE TABLE `encounter_provider` (
   KEY `encounter_id_fk` (`encounter_id`),
   KEY `provider_id_fk` (`provider_id`),
   KEY `encounter_role_id_fk` (`encounter_role_id`),
+  KEY `encounter_provider_creator` (`creator`),
+  KEY `encounter_provider_changed_by` (`changed_by`),
+  KEY `encounter_provider_voided_by` (`voided_by`),
+  CONSTRAINT `encounter_provider_voided_by` FOREIGN KEY (`voided_by`) REFERENCES `users` (`user_id`),
   CONSTRAINT `encounter_id_fk` FOREIGN KEY (`encounter_id`) REFERENCES `encounter` (`encounter_id`),
+  CONSTRAINT `encounter_provider_changed_by` FOREIGN KEY (`changed_by`) REFERENCES `users` (`user_id`),
+  CONSTRAINT `encounter_provider_creator` FOREIGN KEY (`creator`) REFERENCES `users` (`user_id`),
   CONSTRAINT `encounter_role_id_fk` FOREIGN KEY (`encounter_role_id`) REFERENCES `encounter_role` (`encounter_role_id`),
   CONSTRAINT `provider_id_fk` FOREIGN KEY (`provider_id`) REFERENCES `provider` (`provider_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -34115,6 +34121,7 @@ INSERT INTO `global_property` (`property`,`property_value`,`description`,`uuid`,
  ('default_location','Unknown Location','The name of the location to use as a system default','e725b933-8848-4ce5-a133-7509758a217b',NULL,NULL,NULL,NULL),
  ('default_theme',NULL,'Default theme for users.  OpenMRS ships with themes of \'green\', \'orange\', \'purple\', and \'legacy\'','4221633c-f533-43c1-a7c0-0b05ce1d2321',NULL,NULL,NULL,NULL),
  ('encounterForm.obsSortOrder','number','The sort order for the obs listed on the encounter edit form.  \'number\' sorts on the associated numbering from the form schema.  \'weight\' sorts on the order displayed in the form schema.','6f1b8368-8446-459b-8289-ac031dcee46f',NULL,NULL,NULL,NULL),
+ ('EncounterType.encounterTypes.locked','false','saving, retiring or deleting an Encounter Type is not permitted, if true','dbf2f04b-67aa-412d-8bf3-a6d6e59c0985','org.openmrs.customdatatype.datatype.BooleanDatatype',NULL,NULL,NULL),
  ('FormEntry.enableDashboardTab','true','true/false whether or not to show a Form Entry tab on the patient dashboard','d863edf5-e829-4c98-97c0-8bda23f437ef','org.openmrs.customdatatype.datatype.BooleanDatatype',NULL,NULL,NULL),
  ('FormEntry.enableOnEncounterTab','false','true/false whether or not to show a Enter Form button on the encounters tab of the patient dashboard','60f07c17-c10f-4410-990c-e635f0b423c3','org.openmrs.customdatatype.datatype.BooleanDatatype',NULL,NULL,NULL),
  ('graph.color.absolute','rgb(20,20,20)','Color of the \'invalid\' section of numeric graphs on the patient dashboard.','67943709-feaf-462c-b92e-5408999ea15a',NULL,NULL,NULL,NULL),
@@ -34333,9 +34340,9 @@ INSERT INTO `global_property` (`property`,`property_value`,`description`,`uuid`,
  ('xforms.overwriteValidationsOnRefresh','false','Set to true if, on refresh, you want custom validations to be replaced by those from the database concepts.','e852920b-f9d8-4edd-ba4f-e8222a7fac5d',NULL,NULL,NULL,NULL),
  ('xforms.patientDownloadCohort',NULL,'The cohort for patients to download','030aba92-7722-4c02-b348-071a1af6e512',NULL,NULL,NULL,NULL),
  ('xforms.patientRegEncounterFormId','0','The id of the encounter form which will be combined with the patient registration form.','ba8c4b16-770a-4522-b5af-ba675e4fd313',NULL,NULL,NULL,NULL),
- ('xforms.patientSerializer','org.openmrs.module.xforms.serialization.DefaultPatientSerializer','The patient set serializer','3115d4fb-eeeb-4536-a999-4bb26000b095',NULL,NULL,NULL,NULL),
- ('xforms.preferredConceptSource',NULL,'The name for preferred concept source to be used for forms that can be shared with other OpenMRS installations.','50caf4fd-9ddb-4491-90f5-226675fd0e9e',NULL,NULL,NULL,NULL);
+ ('xforms.patientSerializer','org.openmrs.module.xforms.serialization.DefaultPatientSerializer','The patient set serializer','3115d4fb-eeeb-4536-a999-4bb26000b095',NULL,NULL,NULL,NULL);
 INSERT INTO `global_property` (`property`,`property_value`,`description`,`uuid`,`datatype`,`datatype_config`,`preferred_handler`,`handler_config`) VALUES 
+ ('xforms.preferredConceptSource',NULL,'The name for preferred concept source to be used for forms that can be shared with other OpenMRS installations.','50caf4fd-9ddb-4491-90f5-226675fd0e9e',NULL,NULL,NULL,NULL),
  ('xforms.queue_dir','xforms/queue','Directory containing the xforms queue items. This will contain xforms xml model files submitted and awaiting processing to be submitted into the formentry queue.','819e9f7e-49a3-43df-9e21-2e0a936533cb',NULL,NULL,NULL,NULL),
  ('xforms.rejectExistingPatientCreation','true','Set to true to Reject forms for patients considered new when they already exist, by virture of patient identifier. Else set to false to allow them.','5431afe4-feaf-44a9-a372-262eb78b146f',NULL,NULL,NULL,NULL),
  ('xforms.savedSearchSerializer','org.openmrs.module.xforms.serialization.DefaultSavedSearchSerializer','The patient saved search serializer','d470b03e-3407-43a0-80e0-a1b105332dba',NULL,NULL,NULL,NULL),
@@ -35686,6 +35693,7 @@ INSERT INTO `liquibasechangelog` (`ID`,`AUTHOR`,`FILENAME`,`DATEEXECUTED`,`ORDER
  ('20120807-1530','raff','liquibase.xml','2013-11-08 10:34:20',10494,'EXECUTED','3:5767f72373f51c5929e200970a259847','Insert Row','',NULL,'2.0.5'),
  ('20121007-orders_urgency','djazayeri','liquibase-update-to-latest.xml','2013-11-05 11:31:12',10481,'EXECUTED','3:f8eb2228ea34f43ae21bedf4abc8736b','Add Column','Adding urgency column to orders table',NULL,'2.0.5'),
  ('20121020-TRUNK-3610','lluismf','liquibase-update-to-latest.xml','2013-11-05 11:31:12',10483,'EXECUTED','3:a3159e65647f0ff1b667104012b5f4f0','Update Data (x2)','Rename global property autoCloseVisits.visitType to visits.autoCloseVisitType',NULL,'2.0.5'),
+ ('201306141103-TRUNK-3884','susantan','liquibase-update-to-latest.xml','2013-11-25 15:48:16',10502,'EXECUTED','3:9581f8d869e69d911f04e48591a297d0','Add Foreign Key Constraint (x3)','Adding 3 foreign key relationships (creator,created_by,voided_by) to encounter_provider table',NULL,'2.0.5'),
  ('201307331-1740','JUDY','liquibase.xml','2013-11-08 10:34:20',10491,'EXECUTED','3:9438c63c52134bac749d74d6c00911cc','Insert Row','Add values for Default patient name  template to the hl7queryTemplate table',NULL,'2.0.5'),
  ('create-logic-rule-definition','mseaton','liquibase.xml','2013-11-04 16:32:52',10477,'EXECUTED','3:5327271907425ea8182024723912460c','Create Table, Create Index (x3), Add Foreign Key Constraint (x3)','',NULL,'2.0.1'),
  ('create-logic-rule-token-tag','nribeka','liquibase.xml','2013-11-04 16:32:52',10476,'EXECUTED','3:0d0c10ea14371337b4b2a8da0972d768','Create Table, Add Foreign Key Constraint','',NULL,'2.0.1'),
@@ -37422,6 +37430,7 @@ INSERT INTO `privilege` (`privilege`,`description`,`uuid`) VALUES
  ('Add Reports','Able to add reports','019b0ea0-4598-11e3-9d2c-f9d02340d97d'),
  ('Add Users','Able to add users to OpenMRS','019b1299-4598-11e3-9d2c-f9d02340d97d'),
  ('Add Visits','Able to add visits','318d025c-6e1d-4696-9cf5-b9d8594fbcf8'),
+ ('Assign System Developer Role','Able to assign System Developer role','f04f0bf6-d845-4418-9a82-edafbc9d98e4'),
  ('Configure Visits','Able to choose encounter visit handler and enable/disable encounter visits','620c9a60-d1ab-46cc-bb05-a518f447bb6d'),
  ('Create Regimen','Able to create a new regimen','bdc45b54-9c78-422e-a010-8b7b53ac55aa'),
  ('Delete Cohorts','Able to add a cohort to the system','019b168e-4598-11e3-9d2c-f9d02340d97d'),
@@ -37879,25 +37888,13 @@ CREATE TABLE `queue` (
 			data` (`sender`),
   CONSTRAINT `User who inserted
 			data` FOREIGN KEY (`sender`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
 -- Dumping data for table `queue`
 --
 
 /*!40000 ALTER TABLE `queue` DISABLE KEYS */;
-INSERT INTO `queue` (`id`,`time_request_sent`,`response_handler`,`queue_type`,`message`,`sender`,`url`) VALUES 
- (1,'2013-11-05 13:11:25',NULL,'ErrorQueue','Not Saved',1,'POST https://iol-sandbox.ohie.org:5000/ws/rest/v1/patients/'),
- (2,'2013-11-05 21:33:42',NULL,'ProccessingQueue','SavePatientId=20',1,'POST https://iol-sandbox.ohie.org:5000/ws/rest/v1/patients/'),
- (3,'2013-11-05 21:35:59',NULL,'ProccessingQueue','SavePatientId=21',1,'POST https://iol-sandbox.ohie.org:5000/ws/rest/v1/patients/'),
- (4,'2013-11-05 22:12:20',NULL,'ProccessingQueue','SavePatientId=22',1,'POST https://iol-sandbox.ohie.org:5000/ws/rest/v1/patients/'),
- (5,'2013-11-06 11:28:26',NULL,'ErrorQueue','Not Saved',1,'POST https://iol-sandbox.ohie.org:5000/ws/rest/v1/patients/'),
- (6,'2013-11-06 11:28:26',NULL,'ErrorQueue','EncounterId=1',1,'POST https://iol-sandbox.ohie.org:5000/ws/rest/v1/patient/Old+Identification+Number-1234/encounters'),
- (7,'2013-11-06 11:30:05',NULL,'ErrorQueue','Not Saved',1,'POST https://iol-sandbox.ohie.org:5000/ws/rest/v1/patients/'),
- (8,'2013-11-06 11:30:05',NULL,'ErrorQueue','EncounterId=2',1,'POST https://iol-sandbox.ohie.org:5000/ws/rest/v1/patient/Old+Identification+Number-1234/encounters'),
- (9,'2013-11-12 14:12:42',NULL,'ArchiveQueue','SavePatientId=23',1,'POST https://iol-sandbox.ohie.org:5000/ws/rest/v1/patients/'),
- (10,'2013-11-12 14:30:40',NULL,'ArchiveQueue','UpdatePatientId=23',1,'PUT https://iol-sandbox.ohie.org:5000/ws/rest/v1/patient/NID-6789'),
- (11,'2013-11-12 15:10:50',NULL,'ArchiveQueue','UpdatePatientId=23',1,'PUT https://iol-sandbox.ohie.org:5000/ws/rest/v1/patient/NID-1234567890123464');
 /*!40000 ALTER TABLE `queue` ENABLE KEYS */;
 
 
@@ -38282,116 +38279,6 @@ CREATE TABLE `reporting_report_request` (
 
 
 --
--- Definition of table `rheashradapter_get_encounter_log`
---
-
-DROP TABLE IF EXISTS `rheashradapter_get_encounter_log`;
-CREATE TABLE `rheashradapter_get_encounter_log` (
-  `get_request_id` int(11) NOT NULL AUTO_INCREMENT,
-  `patient_id` varchar(40) DEFAULT NULL,
-  `encounter_unique_id` varchar(40) DEFAULT NULL,
-  `enterprise_location_id` varchar(40) DEFAULT NULL,
-  `date_start` varchar(40) DEFAULT NULL,
-  `date_end` varchar(40) DEFAULT NULL,
-  `log_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `result` varchar(200) DEFAULT NULL,
-  `error` varchar(255) DEFAULT NULL,
-  `error_details` longtext,
-  PRIMARY KEY (`get_request_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
---
--- Dumping data for table `rheashradapter_get_encounter_log`
---
-
-/*!40000 ALTER TABLE `rheashradapter_get_encounter_log` DISABLE KEYS */;
-/*!40000 ALTER TABLE `rheashradapter_get_encounter_log` ENABLE KEYS */;
-
-
---
--- Definition of table `rheashradapter_matching_encounters`
---
-
-DROP TABLE IF EXISTS `rheashradapter_matching_encounters`;
-CREATE TABLE `rheashradapter_matching_encounters` (
-  `matching_encounters_id` int(11) NOT NULL AUTO_INCREMENT,
-  `get_request_id` int(11) DEFAULT NULL,
-  `encounter_id` int(11) DEFAULT NULL,
-  PRIMARY KEY (`matching_encounters_id`),
-  KEY `matching_id` (`get_request_id`),
-  CONSTRAINT `matching_id` FOREIGN KEY (`get_request_id`) REFERENCES `rheashradapter_get_encounter_log` (`get_request_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
---
--- Dumping data for table `rheashradapter_matching_encounters`
---
-
-/*!40000 ALTER TABLE `rheashradapter_matching_encounters` DISABLE KEYS */;
-/*!40000 ALTER TABLE `rheashradapter_matching_encounters` ENABLE KEYS */;
-
-
---
--- Definition of table `rheashradapter_patient_merge_log`
---
-
-DROP TABLE IF EXISTS `rheashradapter_patient_merge_log`;
-CREATE TABLE `rheashradapter_patient_merge_log` (
-  `patient_merge_log_id` int(11) NOT NULL AUTO_INCREMENT,
-  `retired_patient` varchar(40) DEFAULT NULL,
-  `surviving_patient` varchar(40) DEFAULT NULL,
-  `winner` int(11) NOT NULL,
-  `looser` int(11) NOT NULL,
-  `merged_data` longtext,
-  `created_date` datetime NOT NULL,
-  `created_user_id` int(11) DEFAULT NULL,
-  `restored_date` datetime DEFAULT NULL,
-  `restored_user_id` int(11) DEFAULT NULL,
-  `flag` tinyint(1) NOT NULL DEFAULT '0',
-  PRIMARY KEY (`patient_merge_log_id`),
-  KEY `surviving_person` (`winner`),
-  KEY `retired_person` (`looser`),
-  KEY `created_user_rhea` (`created_user_id`),
-  KEY `retired_user_rhea` (`restored_user_id`),
-  CONSTRAINT `surviving_person` FOREIGN KEY (`winner`) REFERENCES `patient` (`patient_id`),
-  CONSTRAINT `retired_person` FOREIGN KEY (`looser`) REFERENCES `patient` (`patient_id`),
-  CONSTRAINT `created_user_rhea` FOREIGN KEY (`created_user_id`) REFERENCES `users` (`user_id`),
-  CONSTRAINT `retired_user_rhea` FOREIGN KEY (`restored_user_id`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
---
--- Dumping data for table `rheashradapter_patient_merge_log`
---
-
-/*!40000 ALTER TABLE `rheashradapter_patient_merge_log` DISABLE KEYS */;
-/*!40000 ALTER TABLE `rheashradapter_patient_merge_log` ENABLE KEYS */;
-
-
---
--- Definition of table `rheashradapter_post_encounter_log`
---
-
-DROP TABLE IF EXISTS `rheashradapter_post_encounter_log`;
-CREATE TABLE `rheashradapter_post_encounter_log` (
-  `post_request_id` int(11) NOT NULL AUTO_INCREMENT,
-  `patient_id` varchar(40) DEFAULT NULL,
-  `hl7_data` mediumtext,
-  `date_created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `valid` smallint(6) NOT NULL DEFAULT '0',
-  `result` varchar(200) DEFAULT NULL,
-  `error` longtext,
-  `user_id` int(11) NOT NULL,
-  PRIMARY KEY (`post_request_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
---
--- Dumping data for table `rheashradapter_post_encounter_log`
---
-
-/*!40000 ALTER TABLE `rheashradapter_post_encounter_log` DISABLE KEYS */;
-/*!40000 ALTER TABLE `rheashradapter_post_encounter_log` ENABLE KEYS */;
-
-
---
 -- Definition of table `role`
 --
 
@@ -38512,7 +38399,7 @@ CREATE TABLE `scheduler_task_config` (
 INSERT INTO `scheduler_task_config` (`task_config_id`,`name`,`description`,`schedulable_class`,`start_time`,`start_time_pattern`,`repeat_interval`,`start_on_startup`,`started`,`created_by`,`date_created`,`changed_by`,`date_changed`,`last_execution_time`,`uuid`) VALUES 
  (1,'Update Concept Index','Iterates through the concept dictionary, re-creating the concept index (which are used for searcing). This task is started when using the \'Update Concept Index Storage\' page and no range is given.  This task stops itself when one iteration has completed.','org.openmrs.scheduler.tasks.ConceptIndexUpdateTask',NULL,NULL,0,0,0,1,'2005-01-01 00:00:00',2,'2013-11-04 16:33:32',NULL,'7c75911e-0310-11e0-8222-18a905e044dc'),
  (2,'Auto Close Visits Task','Stops all active visits that match the visit type(s) specified by the value of the global property \'visits.autoCloseVisitType\'','org.openmrs.scheduler.tasks.AutoCloseVisitsTask','2011-11-28 23:59:59','MM/dd/yyyy HH:mm:ss',86400,0,0,1,'2013-11-04 16:32:22',NULL,NULL,NULL,'8c17b376-1a2b-11e1-a51a-00248140a5eb'),
- (3,'Initialize Logic Rule Providers',NULL,'org.openmrs.logic.task.InitializeLogicRuleProvidersTask','2013-11-19 17:11:42',NULL,1999999999,0,1,2,'2013-11-04 16:33:00',2,'2013-11-19 17:12:18','2013-11-12 15:20:21','35778d6d-c8fb-48e6-a9d9-17892eac1a8f'),
+ (3,'Initialize Logic Rule Providers',NULL,'org.openmrs.logic.task.InitializeLogicRuleProvidersTask','2013-11-25 15:49:01',NULL,1999999999,0,1,2,'2013-11-04 16:33:00',2,'2013-11-25 15:49:01','2013-11-25 15:49:01','35778d6d-c8fb-48e6-a9d9-17892eac1a8f'),
  (6,'Process Usage Statistics Data','Deletes or aggregates old usage statistics data','org.openmrs.module.usagestatistics.tasks.AggregatorTask','2013-11-05 00:00:00',NULL,3600,1,1,2,'2013-11-05 11:32:23',2,'2013-11-05 13:00:00','2013-11-05 13:00:00','ff4ba970-6b73-4f5f-a548-975035acd9d4'),
  (7,'Send Usage Statistics Reports','Sends usage statistics reports','org.openmrs.module.usagestatistics.tasks.SendReportsTask','2013-11-05 00:00:00',NULL,86400,1,1,2,'2013-11-05 11:32:23',2,'2013-11-05 12:06:48',NULL,'1a02d757-ba83-4098-b3a8-e7938f8c8839');
 /*!40000 ALTER TABLE `scheduler_task_config` ENABLE KEYS */;
@@ -38722,7 +38609,7 @@ CREATE TABLE `user_property` (
 /*!40000 ALTER TABLE `user_property` DISABLE KEYS */;
 INSERT INTO `user_property` (`user_id`,`property`,`property_value`) VALUES 
  (1,'defaultLocation',''),
- (1,'loginAttempts','5'),
+ (1,'loginAttempts','0'),
  (1,'notification',''),
  (1,'notificationAddress',''),
  (1,'showRetired','false'),
