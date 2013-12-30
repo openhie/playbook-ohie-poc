@@ -5,6 +5,7 @@
   #sudo: true
 
   roles:
+#    - bootstrap
     - java
     - tomcat
     - mysql
