@@ -1,3 +1,33 @@
 ---  
+### Tomcat config
+- name: Stop Tomcat temporarily #necessary for db updates to process correctly
+  service: name=tomcat7 state=stopped
+
+- name: Tomcat 7 tweaks for openmrs
+  template: src=tomcat7 dest=/etc/default/tomcat7 
+
+- name: Tomcat 7 memory tweaks for openmrs
+  template: src=web.xml dest=/etc/tomcat7/web.xml
+
+### mysql Config
+
+- name: Create openmrs db
+  mysql_db: name={{ db_name }} login_user=root login_password={{ mysqlrootpwd }} encoding=utf8 state=present
+
+- name: Create openmrs db user
+  mysql_user: login_user=root login_password={{ mysqlrootpwd }} name={{ mysqluser }} password={{ mysqlomrspwd }} state=present priv={{ db_name }}.*:ALL
+
+### Openmrs Config
+
 - name: Download OpenMRS war
-  get_url: dest=/var/lib/tomcat7/webapps/openmrs.war url=http://softlayer-dal.dl.sourceforge.net/project/openmrs/releases/OpenMRS_{{ omrsversion }}/openmrs.war owner=tomcat7 group=tomcat7
+  get_url: dest=/var/lib/tomcat7/webapps/openmrs.war url=http://mavenrepo.openmrs.org/nexus/service/local/repositories/releases/content/org/openmrs/web/openmrs-webapp/{{ omrs_version }}/openmrs-webapp-{{ omrs_version }}.war owner=tomcat7 group=tomcat7
+
+- name: Create openmrs home folder
+  file: path=/usr/share/tomcat7/.OpenMRS state=directory group=tomcat7 owner=tomcat7 recurse=yes
+
+- name: Create openmrs modules folder
+  file: path=/usr/share/tomcat7/.OpenMRS/modules state=directory group=tomcat7 owner=tomcat7 recurse=yes
+
+- name: Insert openmrs-runtime-properties file
+  template: src=openmrs-runtime.properties dest=/usr/share/tomcat7/.OpenMRS/ owner=tomcat7 group=tomcat7 mode=0600
+  notify: restart tomcat7

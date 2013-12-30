@@ -9,4 +9,4 @@
     - tomcat
     - mysql
     - openmrs
-    - openmrs-modules
+    - ohie-poc

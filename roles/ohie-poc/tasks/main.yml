@@ -1,0 +1,13 @@
+---
+- name: Copy PoC test db to /tmp
+  copy: src=poc_sandbox_demo.sql dest=/tmp/
+
+- name: Import PoC test db
+  mysql_db: name={{ db_name }} login_user={{ mysqluser }} login_password={{ mysqlomrspwd }} state=import target=/tmp/poc_sandbox_demo.sql
+  notify: restart tomcat7
+
+- name: Install PoC Modules
+  copy: src={{ item }} dest=/usr/share/tomcat7/.OpenMRS/modules/ owner=tomcat7 group=tomcat7
+  with_fileglob:
+    - modules/*.omod
+  notify: restart tomcat7

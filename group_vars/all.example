@@ -1,5 +1,11 @@
 ---
+# Version of OpenMRS to deploy
+omrs_version: 1.9.3
 # Set mysql root password
 mysqlrootpwd: password
-# Version of OpenMRS to deploy
-omrsversion: 1.9.6
+# Set mysql username for openmrs
+mysqluser: openmrs-poc_user
+# Password for mysqluser
+mysqlomrspwd: password
+# Name of database
+db_name: openmrs-poc

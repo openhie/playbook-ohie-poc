@@ -4,13 +4,5 @@
   with_items:
     - tomcat7
 
-- name: Modify tomcat config
-  template: src=tomcat7 dest=/etc/default/tomcat7
-  notify: restart tomcat
-
-- name: Enable Tomcat Service
-  service: name=tomcat7 state=started enabled=yes
-
-- name: Create .OpenMRS directory
-  file: path=/usr/share/tomcat7/.OpenMRS state=directory group=tomcat7 owner=tomcat7 recurse=yes
-
+- name: Enable Tomcat Service on boot
+  service: name=tomcat7 enabled=yes
